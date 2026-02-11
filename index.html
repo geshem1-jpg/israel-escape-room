@@ -1027,8 +1027,51 @@
                             הצביעו בשם כל מדינה ומדינה. צריכים 33 קולות "בעד" כדי לעבור!<br/>
                             <strong>שימו לב:</strong> כל מדינה חייבת לקבל את ההצבעה ההיסטורית הנכונה שלה.
                         </p>
-                        <div style="text-align: center; margin: 10px 0; color: var(--vintage-yellow); font-weight: 700;">
-                            קבוצה ${gameState.currentBatch + 1} מתוך ${totalBatches}
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin: 15px 0; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
+                            <button 
+                                onclick="changeBatch(-1)" 
+                                ${gameState.currentBatch === 0 ? 'disabled' : ''}
+                                style="padding: 10px 20px; background: var(--vintage-blue); color: white; border: none; border-radius: 5px; cursor: pointer; font-family: 'Heebo', sans-serif; font-weight: 700; opacity: ${gameState.currentBatch === 0 ? '0.3' : '1'};"
+                            >
+                                ← קבוצה קודמת
+                            </button>
+                            
+                            <div style="color: var(--vintage-yellow); font-weight: 700; font-size: 1.1rem;">
+                                קבוצה ${gameState.currentBatch + 1} מתוך ${totalBatches}
+                            </div>
+                            
+                            <button 
+                                onclick="changeBatch(1)" 
+                                ${gameState.currentBatch === totalBatches - 1 ? 'disabled' : ''}
+                                style="padding: 10px 20px; background: var(--vintage-blue); color: white; border: none; border-radius: 5px; cursor: pointer; font-family: 'Heebo', sans-serif; font-weight: 700; opacity: ${gameState.currentBatch === totalBatches - 1 ? '0.3' : '1'};"
+                            >
+                                קבוצה הבאה →
+                            </button>
+                        </div>
+                        
+                        <div style="text-align: center; margin-bottom: 10px;">
+                            <div style="display: inline-flex; gap: 5px;">
+                                ${Array.from({length: totalBatches}, (_, i) => {
+                                    const batchStart = i * batchSize;
+                                    const batchEnd = Math.min(batchStart + batchSize, votingCountries.length);
+                                    const batchCountries = votingCountries.slice(batchStart, batchEnd);
+                                    const allVoted = batchCountries.every(c => gameState.countryVotes[c.nameEn] !== undefined);
+                                    const allCorrect = batchCountries.every(c => gameState.countryVotes[c.nameEn] === c.vote);
+                                    
+                                    return `
+                                        <div 
+                                            onclick="gameState.currentBatch = ${i}; renderStation(1);"
+                                            style="width: 35px; height: 35px; border-radius: 50%; background: ${i === gameState.currentBatch ? 'var(--vintage-yellow)' : allVoted && allCorrect ? 'var(--success-green)' : allVoted ? '#c0392b' : 'rgba(255,255,255,0.2)'}; display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; font-weight: 700; border: 2px solid ${i === gameState.currentBatch ? 'white' : 'transparent'};"
+                                        >
+                                            ${i + 1}
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                            <div style="font-size: 0.8rem; color: rgba(255,255,255,0.6); margin-top: 5px;">
+                                🟢 נכון | 🔴 יש טעויות | ⚪ לא הצבעתם
+                            </div>
                         </div>
                     </div>
                     
@@ -1039,33 +1082,30 @@
                             const isCorrect = userVote === country.vote;
                             
                             return `
-                                <div class="country-card" style="border-color: ${isVoted && !isCorrect ? '#c0392b' : 'rgba(255,255,255,0.3)'};">
+                                <div class="country-card" style="border-color: ${isVoted && !isCorrect ? '#c0392b' : isVoted && isCorrect ? 'var(--success-green)' : 'rgba(255,255,255,0.3)'};">
                                     <div class="country-name">
                                         ${isVoted ? (isCorrect ? '✓' : '✗') : ''} ${country.nameHe}
                                     </div>
                                     
                                     <div class="vote-buttons">
                                         <button
-                                            class="vote-btn yes"
+                                            class="vote-btn yes ${userVote === 'yes' ? 'selected' : ''}"
                                             onclick="handleVote('${country.nameEn}', 'yes', '${country.vote}')"
-                                            ${isVoted ? 'disabled' : ''}
-                                            style="${userVote === 'yes' ? 'opacity: 1;' : ''}"
+                                            style="${userVote === 'yes' ? 'opacity: 1; box-shadow: 0 0 15px rgba(46, 204, 113, 0.5);' : ''}"
                                         >
                                             בעד
                                         </button>
                                         <button
-                                            class="vote-btn no"
+                                            class="vote-btn no ${userVote === 'no' ? 'selected' : ''}"
                                             onclick="handleVote('${country.nameEn}', 'no', '${country.vote}')"
-                                            ${isVoted ? 'disabled' : ''}
-                                            style="${userVote === 'no' ? 'opacity: 1;' : ''}"
+                                            style="${userVote === 'no' ? 'opacity: 1; box-shadow: 0 0 15px rgba(231, 76, 60, 0.5);' : ''}"
                                         >
                                             נגד
                                         </button>
                                         <button
-                                            class="vote-btn abstain"
+                                            class="vote-btn abstain ${userVote === 'abstain' ? 'selected' : ''}"
                                             onclick="handleVote('${country.nameEn}', 'abstain', '${country.vote}')"
-                                            ${isVoted ? 'disabled' : ''}
-                                            style="${userVote === 'abstain' ? 'opacity: 1;' : ''}"
+                                            style="${userVote === 'abstain' ? 'opacity: 1; box-shadow: 0 0 15px rgba(127, 140, 141, 0.5);' : ''}"
                                         >
                                             נמנע
                                         </button>
@@ -1106,37 +1146,24 @@
             `;
         }
 
+        function changeBatch(direction) {
+            const totalBatches = Math.ceil(votingCountries.length / 8);
+            gameState.currentBatch = Math.max(0, Math.min(gameState.currentBatch + direction, totalBatches - 1));
+            renderStation(1);
+        }
+
         function handleVote(countryEn, voteType, correctVote) {
+            // If changing vote, update the counter
+            const previousVote = gameState.countryVotes[countryEn];
+            if (previousVote) {
+                gameState.votes[previousVote]--;
+            }
+            
             gameState.countryVotes[countryEn] = voteType;
             gameState.votes[voteType]++;
             
             updateVoteCounter();
-            
-            // Check if all countries in current batch are voted
-            const batchSize = 8;
-            const startIdx = gameState.currentBatch * batchSize;
-            const endIdx = Math.min(startIdx + batchSize, votingCountries.length);
-            const currentBatchCountries = votingCountries.slice(startIdx, endIdx);
-            
-            const allBatchVoted = currentBatchCountries.every(c => 
-                gameState.countryVotes[c.nameEn] !== undefined
-            );
-            
-            if (allBatchVoted) {
-                // Move to next batch if available
-                const totalBatches = Math.ceil(votingCountries.length / batchSize);
-                if (gameState.currentBatch < totalBatches - 1) {
-                    setTimeout(() => {
-                        gameState.currentBatch++;
-                        renderStation(1);
-                    }, 500);
-                } else {
-                    // All done, just re-render
-                    renderStation(1);
-                }
-            } else {
-                renderStation(1);
-            }
+            renderStation(1);
         }
 
         function updateVoteCounter() {
